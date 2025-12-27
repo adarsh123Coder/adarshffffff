@@ -1,7 +1,6 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { generateSpeech } from '../services/gemini';
-import { decode, decodeAudioData } from './AudioUtils';
+import React, { useState, useEffect } from 'react';
+import { speakNative } from '../services/speech';
 
 interface FlashcardViewProps {
   items: any[];
@@ -11,143 +10,119 @@ interface FlashcardViewProps {
 
 const FlashcardView: React.FC<FlashcardViewProps> = ({ items, onExit, type }) => {
   const [index, setIndex] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const currentSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const currentItem = items[index];
   const title = type === 'letter' ? currentItem.letter : currentItem.value;
   const subtitle = currentItem.word;
 
-  // Pre-initialize AudioContext on first interaction
-  const initAudio = () => {
-    if (!audioContextRef.current) {
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-    }
-    if (audioContextRef.current.state === 'suspended') {
-      audioContextRef.current.resume();
-    }
-  };
-
-  const handleSpeak = async (text: string) => {
-    initAudio();
-    setIsLoading(true);
-    const ctx = audioContextRef.current!;
-    
-    // Stop previous audio immediately
-    if (currentSourceRef.current) {
-      try { currentSourceRef.current.stop(); } catch(e) {}
-    }
-
-    const audioData = await generateSpeech(text);
-    setIsLoading(false);
-    
-    if (audioData) {
-      const buffer = await decodeAudioData(decode(audioData), ctx, 24000, 1);
-      const source = ctx.createBufferSource();
-      source.buffer = buffer;
-      source.connect(ctx.destination);
-      currentSourceRef.current = source;
-      source.start(0); // Start playing immediately
-    }
+  const handleSpeak = () => {
+    speakNative(`${title}. ${subtitle}.`);
   };
 
   useEffect(() => {
-    // We only auto-speak if it's the first render or index actually changes
-    // But we don't want to over-speak if the user is clicking fast
-    const timer = setTimeout(() => {
-       handleSpeak(`${title}. ${subtitle}.`);
-    }, 100);
-    return () => clearTimeout(timer);
+    handleSpeak();
   }, [index]);
 
   const next = () => {
-    setIndex((prev) => (prev + 1) % items.length);
+    setIsAnimating(true);
+    setTimeout(() => {
+      setIndex((prev) => (prev + 1) % items.length);
+      setIsAnimating(false);
+    }, 150);
   };
 
   const prev = () => {
-    setIndex((prev) => (prev - 1 + items.length) % items.length);
+    setIsAnimating(true);
+    setTimeout(() => {
+      setIndex((prev) => (prev - 1 + items.length) % items.length);
+      setIsAnimating(false);
+    }, 150);
   };
 
   return (
-    <div className="flex flex-col items-center justify-between min-h-screen w-full max-w-4xl mx-auto p-6 bg-white/50 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 my-4">
-      {/* Header */}
-      <div className="w-full flex justify-between items-center mb-8">
+    <div className="flex flex-col items-center justify-between h-[100dvh] w-full max-w-4xl mx-auto p-4 sm:p-6 bg-white/40 backdrop-blur-md sm:rounded-[3rem] shadow-2xl border-x border-white/20 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden">
+      {/* Top Nav - Compact for mobile */}
+      <div className="w-full flex justify-between items-center mb-2 sm:mb-4">
         <button 
           onClick={onExit} 
-          className="bg-slate-800 text-white px-8 py-3 rounded-2xl font-bold shadow-lg hover:bg-slate-700 active:scale-95 transition-all flex items-center gap-2"
+          className="bg-white/80 hover:bg-white text-slate-700 px-4 py-2 sm:px-6 sm:py-3 rounded-xl font-bold shadow-sm border border-slate-100 active:scale-90 transition-all text-sm sm:text-base"
         >
-          <span>←</span> Back Home
+          ← Home
         </button>
-        <div className="bg-white/80 px-4 py-2 rounded-xl font-bold text-slate-500 shadow-sm border border-slate-100">
-          {index + 1} of {items.length}
+        <div className="bg-white/90 px-3 py-1.5 sm:px-5 sm:py-2 rounded-xl font-bold text-sky-500 shadow-sm border border-sky-50 text-xs sm:text-sm">
+          {index + 1} / {items.length}
         </div>
       </div>
 
-      {/* Main Learning Card */}
+      {/* Main Interactive Card - Scales based on viewport */}
       <div 
-        onClick={() => handleSpeak(`${title}. ${subtitle}.`)}
-        className={`w-full flex-1 rounded-[4rem] ${currentItem.color} flex flex-col items-center justify-center text-white shadow-inner relative overflow-hidden cursor-pointer group transition-all duration-300 hover:scale-[1.01] hover:brightness-105 active:scale-95`}
+        onClick={handleSpeak}
+        className={`w-full flex-1 rounded-[2.5rem] sm:rounded-[4rem] ${currentItem.color} flex flex-col items-center justify-center text-white shadow-2xl relative overflow-hidden cursor-pointer group transition-all duration-300 transform ${isAnimating ? 'scale-95 opacity-0' : 'scale-100 opacity-100'} hover:brightness-105 active:scale-95`}
       >
-        {/* Modern Background Accents */}
-        <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none select-none overflow-hidden">
-           <div className="absolute -top-20 -left-20 w-80 h-80 bg-white rounded-full blur-3xl opacity-40"></div>
-           <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-white rounded-full blur-3xl opacity-40"></div>
-           <div className="grid grid-cols-6 gap-20 p-10 rotate-12 opacity-20">
-              {Array.from({length: 24}).map((_, i) => (
-                <div key={i} className="text-4xl font-fredoka uppercase">{type === 'letter' ? currentItem.letter : currentItem.value}</div>
-              ))}
-           </div>
+        {/* Playful Background Elements */}
+        <div className="absolute inset-0 pointer-events-none opacity-20">
+          <div className="absolute top-4 left-4 text-6xl sm:text-9xl animate-bounce">✨</div>
+          <div className="absolute bottom-4 right-4 text-6xl sm:text-9xl animate-pulse delay-700">🌈</div>
         </div>
-        
-        <div className="relative z-10 flex flex-col items-center animate-in fade-in zoom-in duration-500">
-           <span className="text-[14rem] md:text-[20rem] font-fredoka leading-none drop-shadow-[0_10px_10px_rgba(0,0,0,0.2)]">
+
+        <div className="relative z-10 flex flex-col items-center text-center p-4">
+           <div className="text-8xl sm:text-[15rem] md:text-[20rem] font-fredoka leading-none drop-shadow-2xl animate-in zoom-in duration-500 delay-100">
              {title}
-           </span>
-           <div className="flex items-center gap-4 bg-black/10 backdrop-blur-md px-10 py-4 rounded-3xl mt-4 border border-white/20">
-              <span className="text-5xl md:text-7xl">{currentItem.emoji || '✨'}</span>
-              <h2 className="text-4xl md:text-6xl font-fredoka uppercase tracking-widest">{subtitle}</h2>
+           </div>
+           
+           <div className="mt-4 sm:mt-6 flex flex-col items-center gap-2">
+             <div className="text-6xl sm:text-9xl mb-1 drop-shadow-lg scale-animation">
+               {currentItem.emoji || '⭐'}
+             </div>
+             <div className="bg-white/20 backdrop-blur-lg px-6 py-2 sm:px-12 sm:py-4 rounded-2xl sm:rounded-[2.5rem] border border-white/30 shadow-xl">
+               <h2 className="text-2xl sm:text-5xl md:text-7xl font-fredoka uppercase tracking-widest leading-tight">
+                 {subtitle}
+               </h2>
+             </div>
            </div>
         </div>
-        
-        {/* Click Prompt Overlay */}
-        <div className="absolute bottom-10 text-white font-bold tracking-widest text-sm flex items-center gap-2">
-           {isLoading ? (
-             <div className="flex gap-1">
-               <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
-               <div className="w-2 h-2 bg-white rounded-full animate-bounce delay-100"></div>
-               <div className="w-2 h-2 bg-white rounded-full animate-bounce delay-200"></div>
-             </div>
-           ) : (
-             <span className="animate-pulse">TAP TO HEAR 🔊</span>
-           )}
+
+        <div className="absolute bottom-4 flex items-center gap-2 bg-black/10 px-4 py-1.5 rounded-full backdrop-blur-sm border border-white/10 text-xs sm:text-sm">
+           <span className="text-white font-bold tracking-widest animate-pulse">TAP TO HEAR</span>
+           <span>🔊</span>
         </div>
       </div>
 
-      {/* Controls */}
-      <div className="w-full flex items-center gap-4 mt-8">
+      {/* Navigation Controls - Optimized height for mobile */}
+      <div className="w-full flex items-center gap-3 sm:gap-6 mt-4 mb-2">
         <button 
           onClick={prev} 
-          className="h-20 w-20 bg-white border-2 border-slate-100 rounded-3xl flex items-center justify-center text-3xl text-slate-400 hover:text-slate-600 hover:border-slate-200 shadow-sm active:scale-95 transition-all"
+          className="h-16 w-16 sm:h-24 sm:w-24 bg-white hover:bg-slate-50 border-2 sm:border-4 border-slate-100 rounded-2xl sm:rounded-[2rem] flex items-center justify-center text-3xl sm:text-5xl text-slate-300 hover:text-sky-500 shadow-lg active:scale-90 transition-all"
         >
           ←
         </button>
         
         <button 
-          onClick={() => handleSpeak(`${title}. ${subtitle}.`)}
-          disabled={isLoading}
-          className={`flex-1 h-20 bg-yellow-400 hover:bg-yellow-500 text-white font-fredoka rounded-3xl shadow-xl shadow-yellow-200 transition-all active:scale-95 flex items-center justify-center gap-3 text-3xl ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          onClick={handleSpeak}
+          className="flex-1 h-16 sm:h-24 bg-yellow-400 hover:bg-yellow-500 text-white font-fredoka rounded-2xl sm:rounded-[2.5rem] shadow-xl shadow-yellow-200/50 transition-all active:scale-95 flex items-center justify-center gap-2 sm:gap-4 text-2xl sm:text-4xl border-b-4 sm:border-b-8 border-yellow-600 active:border-b-0"
         >
-          <span>{isLoading ? '...' : '🔊 SPEAK'}</span>
+          <span>HEAR</span>
+          <span className="text-3xl sm:text-5xl">🔊</span>
         </button>
 
         <button 
           onClick={next} 
-          className="h-20 w-20 bg-sky-500 text-white rounded-3xl flex items-center justify-center text-3xl shadow-xl shadow-sky-200 active:scale-95 transition-all hover:bg-sky-600"
+          className="h-16 w-16 sm:h-24 sm:w-24 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl sm:rounded-[2rem] flex items-center justify-center text-3xl sm:text-5xl shadow-xl shadow-sky-200 active:scale-90 transition-all border-b-4 sm:border-b-8 border-sky-700 active:border-b-0"
         >
           →
         </button>
       </div>
+
+      <style>{`
+        .scale-animation {
+          animation: scaleUpDown 2s ease-in-out infinite;
+        }
+        @keyframes scaleUpDown {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.15); }
+        }
+      `}</style>
     </div>
   );
 };

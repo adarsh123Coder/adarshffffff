@@ -5,76 +5,82 @@ import { ALPHABET_DATA, NUMBER_DATA } from './constants';
 import Layout from './components/Layout';
 import FlashcardView from './components/FlashcardView';
 import QuizView from './components/QuizView';
+import { speakNative } from './services/speech';
 
 const App: React.FC = () => {
   const [view, setView] = useState<View>(View.HOME);
 
+  const handleCardClick = (targetView: View, text: string) => {
+    speakNative(text);
+    setView(targetView);
+  };
+
   const renderHome = () => (
-    <div className="space-y-12 py-12 max-w-5xl mx-auto">
-      <section className="text-center space-y-4">
-        <div className="inline-block float-animation text-8xl mb-4">🚀</div>
-        <h1 className="text-6xl md:text-8xl font-fredoka text-slate-800 tracking-tight leading-none">
-          Magic <span className="text-sky-500">Learning</span>
+    <div className="space-y-8 sm:space-y-16 py-8 sm:py-12 max-w-6xl mx-auto animate-in fade-in duration-700 px-4 sm:px-0">
+      <section className="text-center space-y-4 sm:space-y-6">
+        <div className="inline-block float-animation text-6xl sm:text-9xl mb-2 cursor-pointer hover:rotate-12 transition-transform" onClick={() => speakNative("Let's go to space!")}>🚀</div>
+        <h1 className="text-4xl sm:text-7xl md:text-9xl font-fredoka text-slate-800 tracking-tight leading-none drop-shadow-sm">
+          Magic <span className="text-sky-500">Learn</span>
         </h1>
-        <p className="text-xl text-slate-400 font-medium tracking-wide max-w-md mx-auto">
-          Interactive alphabet and numbers adventure for curious kids.
+        <p className="text-base sm:text-2xl text-slate-400 font-semibold tracking-wide max-w-lg mx-auto leading-relaxed px-4">
+          The fun way to learn your <span className="text-orange-400">ABC's</span> and <span className="text-sky-500">123's</span>!
         </p>
       </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-6">
-        {/* Learn ABC */}
+      <div className="grid grid-cols-2 gap-4 sm:gap-10 sm:px-8">
+        {/* Card: Learn ABC */}
         <button 
-          onClick={() => setView(View.ALPHABET)}
-          className="bg-white p-10 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:shadow-[0_25px_60px_rgba(249,115,22,0.15)] transition-all border border-slate-50 flex flex-col items-center text-center gap-6 group active:scale-95"
+          onClick={() => handleCardClick(View.ALPHABET, "Let's learn the alphabet!")}
+          className="bg-white p-4 sm:p-12 rounded-[1.5rem] sm:rounded-[4rem] shadow-xl sm:shadow-2xl shadow-orange-100/50 hover:shadow-orange-200/50 transition-all border-2 sm:border-4 border-transparent hover:border-orange-400 flex flex-col items-center text-center gap-2 sm:gap-8 group active:scale-95 transform sm:hover:-translate-y-2"
         >
-          <div className="w-32 h-32 bg-orange-50 rounded-[2.5rem] flex items-center justify-center text-6xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">🔤</div>
-          <div>
-            <h2 className="text-3xl font-fredoka text-orange-500 mb-1">Learn ABC</h2>
-            <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">A is for Apple</p>
+          <div className="w-16 h-16 sm:w-40 sm:h-40 bg-orange-100 rounded-2xl sm:rounded-[3rem] flex items-center justify-center text-3xl sm:text-8xl group-hover:scale-110 sm:group-hover:scale-125 transition-all duration-500 shadow-inner">🔤</div>
+          <div className="space-y-1">
+            <h2 className="text-lg sm:text-5xl font-fredoka text-orange-500">ABC</h2>
+            <p className="text-slate-300 font-bold text-[10px] sm:text-lg uppercase tracking-widest hidden sm:block">A is for Apple</p>
           </div>
         </button>
 
-        {/* Learn 123 */}
+        {/* Card: Learn 123 */}
         <button 
-          onClick={() => setView(View.NUMBERS)}
-          className="bg-white p-10 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:shadow-[0_25px_60px_rgba(14,165,233,0.15)] transition-all border border-slate-50 flex flex-col items-center text-center gap-6 group active:scale-95"
+          onClick={() => handleCardClick(View.NUMBERS, "Let's learn numbers!")}
+          className="bg-white p-4 sm:p-12 rounded-[1.5rem] sm:rounded-[4rem] shadow-xl sm:shadow-2xl shadow-sky-100/50 hover:shadow-sky-200/50 transition-all border-2 sm:border-4 border-transparent hover:border-sky-500 flex flex-col items-center text-center gap-2 sm:gap-8 group active:scale-95 transform sm:hover:-translate-y-2"
         >
-          <div className="w-32 h-32 bg-sky-50 rounded-[2.5rem] flex items-center justify-center text-6xl group-hover:scale-110 group-hover:-rotate-6 transition-all duration-300">🔢</div>
-          <div>
-            <h2 className="text-3xl font-fredoka text-sky-500 mb-1">Learn 123</h2>
-            <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">Count to Ten</p>
+          <div className="w-16 h-16 sm:w-40 sm:h-40 bg-sky-100 rounded-2xl sm:rounded-[3rem] flex items-center justify-center text-3xl sm:text-8xl group-hover:scale-110 sm:group-hover:scale-125 transition-all duration-500 shadow-inner">🔢</div>
+          <div className="space-y-1">
+            <h2 className="text-lg sm:text-5xl font-fredoka text-sky-500">123</h2>
+            <p className="text-slate-300 font-bold text-[10px] sm:text-lg uppercase tracking-widest hidden sm:block">One to Ten</p>
           </div>
         </button>
 
-        {/* ABC Quiz */}
+        {/* Card: ABC Quiz */}
         <button 
-          onClick={() => setView(View.ALPHABET_QUIZ)}
-          className="bg-white p-10 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:shadow-[0_25px_60px_rgba(34,197,94,0.15)] transition-all border border-slate-50 flex flex-col items-center text-center gap-6 group active:scale-95"
+          onClick={() => handleCardClick(View.ALPHABET_QUIZ, "Ready for an alphabet quiz?")}
+          className="bg-white p-4 sm:p-12 rounded-[1.5rem] sm:rounded-[4rem] shadow-xl sm:shadow-2xl shadow-green-100/50 hover:shadow-green-200/50 transition-all border-2 sm:border-4 border-transparent hover:border-green-500 flex flex-col items-center text-center gap-2 sm:gap-8 group active:scale-95 transform sm:hover:-translate-y-2"
         >
-          <div className="w-32 h-32 bg-green-50 rounded-[2.5rem] flex items-center justify-center text-6xl group-hover:scale-110 transition-all duration-300">❓</div>
-          <div>
-            <h2 className="text-3xl font-fredoka text-green-500 mb-1">ABC Quiz</h2>
-            <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">Memory Game</p>
+          <div className="w-16 h-16 sm:w-40 sm:h-40 bg-green-100 rounded-2xl sm:rounded-[3rem] flex items-center justify-center text-3xl sm:text-8xl group-hover:scale-110 sm:group-hover:scale-125 transition-all duration-500 shadow-inner">❓</div>
+          <div className="space-y-1">
+            <h2 className="text-lg sm:text-5xl font-fredoka text-green-500">ABC Quiz</h2>
+            <p className="text-slate-300 font-bold text-[10px] sm:text-lg uppercase tracking-widest hidden sm:block">Game Time!</p>
           </div>
         </button>
 
-        {/* 123 Quiz */}
+        {/* Card: 123 Quiz */}
         <button 
-          onClick={() => setView(View.NUMBER_QUIZ)}
-          className="bg-white p-10 rounded-[3rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:shadow-[0_25px_60px_rgba(168,85,247,0.15)] transition-all border border-slate-50 flex flex-col items-center text-center gap-6 group active:scale-95"
+          onClick={() => handleCardClick(View.NUMBER_QUIZ, "Ready for a number quiz?")}
+          className="bg-white p-4 sm:p-12 rounded-[1.5rem] sm:rounded-[4rem] shadow-xl sm:shadow-2xl shadow-purple-100/50 hover:shadow-purple-200/50 transition-all border-2 sm:border-4 border-transparent hover:border-purple-500 flex flex-col items-center text-center gap-2 sm:gap-8 group active:scale-95 transform sm:hover:-translate-y-2"
         >
-          <div className="w-32 h-32 bg-purple-50 rounded-[2.5rem] flex items-center justify-center text-6xl group-hover:scale-110 transition-all duration-300">🎯</div>
-          <div>
-            <h2 className="text-3xl font-fredoka text-purple-500 mb-1">123 Quiz</h2>
-            <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">How Many?</p>
+          <div className="w-16 h-16 sm:w-40 sm:h-40 bg-purple-100 rounded-2xl sm:rounded-[3rem] flex items-center justify-center text-3xl sm:text-8xl group-hover:scale-110 sm:group-hover:scale-125 transition-all duration-500 shadow-inner">🎯</div>
+          <div className="space-y-1">
+            <h2 className="text-lg sm:text-5xl font-fredoka text-purple-500">123 Quiz</h2>
+            <p className="text-slate-300 font-bold text-[10px] sm:text-lg uppercase tracking-widest hidden sm:block">Count them!</p>
           </div>
         </button>
       </div>
 
-      <div className="flex justify-center gap-10 opacity-20 py-10 filter grayscale contrast-125">
-        <span className="text-4xl">🦒</span>
-        <span className="text-4xl">🐋</span>
-        <span className="text-4xl">🐯</span>
+      <div className="flex justify-center gap-4 sm:gap-16 py-6 overflow-hidden select-none">
+        {['🦒', '🐋', '🐯', '🐼', '🦖'].map((emoji, i) => (
+          <span key={i} className="text-3xl sm:text-6xl animate-bounce" style={{ animationDelay: `${i * 0.2}s` }}>{emoji}</span>
+        ))}
       </div>
     </div>
   );
