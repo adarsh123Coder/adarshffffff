@@ -1,0 +1,7 @@
+{
+  "name": "Magic Learning Adventures",
+  "description": "An interactive AI-powered learning app for kids to explore the alphabet and numbers with stories, images, and speech.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
